@@ -1,0 +1,35 @@
+[Unit]
+Description=Telegram LLM bot
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=120
+StartLimitBurst=3
+
+[Service]
+Type=notify
+NotifyAccess=main
+User=telegram-llm-bot
+Group=telegram-llm-bot
+WorkingDirectory=/opt/telegram-llm-bot/current
+ExecStart=/opt/telegram-llm-bot/current/venv/bin/python -m tg_llm_bot --config /etc/telegram-llm-bot/config.json
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=60
+TimeoutStopSec=150
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/telegram-llm-bot
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CPUQuota=20%
+Nice=10
+MemoryHigh=192M
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

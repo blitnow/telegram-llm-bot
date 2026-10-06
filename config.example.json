@@ -1,0 +1,20 @@
+{
+  "telegram_token": "",
+  "llm_api_key": "",
+  "llm_base_url": "https://openrouter.ai/api/v1",
+  "llm_model": "openrouter/free",
+  "allow_paid_models": false,
+  "web_search_enabled": false,
+  "database_path": "data/bot.sqlite3",
+  "system_prompt_path": "",
+  "history_days": 30,
+  "max_context_chars": 24000,
+  "max_context_messages": 60,
+  "max_output_tokens": 1800,
+  "request_timeout_seconds": 90,
+  "max_parallel_requests": 1,
+  "user_cooldown_seconds": 5,
+  "requests_per_minute": 18,
+  "requests_per_day": 45,
+  "allowed_chat_ids": []
+}
