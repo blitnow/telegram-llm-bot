@@ -5,6 +5,7 @@ from urllib.parse import urlsplit
 import httpx
 
 from .config import Config
+from .formatting import plain_text
 
 
 class TelegramError(Exception):
@@ -128,7 +129,7 @@ class LLMClient:
 
 
 def render_completion(completion: Completion, web_search_enabled: bool) -> str:
-    text = completion.text
+    text = plain_text(completion.text)
     if web_search_enabled and completion.sources:
         text += "\n\nИсточники, возвращённые поиском API:\n" + "\n".join(
             f"{title}\n{url}" for title, url in completion.sources
@@ -136,5 +137,5 @@ def render_completion(completion: Completion, web_search_enabled: bool) -> str:
     elif web_search_enabled:
         text += "\n\nAPI не вернул ссылки на источники; интернет-проверка не подтверждена."
     else:
-        text += "\n\nОтвет по знаниям модели; интернет-проверка не выполнялась."
+        text += "\n\nОтвет модели без интернет-поиска"
     return text

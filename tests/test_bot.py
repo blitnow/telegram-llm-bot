@@ -6,6 +6,7 @@ from pathlib import Path
 from tg_llm_bot.api import Completion, LLMError
 from tg_llm_bot.bot import BotService
 from tg_llm_bot.config import Config
+from tg_llm_bot.formatting import RESPONSE_STYLE
 from tg_llm_bot.storage import Storage
 from test_routing import message
 
@@ -74,6 +75,28 @@ class BotTests(unittest.IsolatedAsyncioTestCase):
         await self.service.handle(message("/new@TestBot тема Б", reply=self.telegram.sent[-1], msg_id=2, user=2))
         self.assertEqual(len(self.llm.calls[-1]), 2)
         self.assertEqual(self.llm.calls[-1][-1]["content"], "тема Б")
+
+    async def test_plain_answer_is_sent_saved_and_reused_in_reply(self):
+        self.llm.answer = "**Краткий вывод**\n* Первый тезис\n\nМогу рассказать подробнее."
+        await self.service.handle(message("@TestBot вопрос", msg_id=1))
+        first = self.telegram.sent[-1]
+        expected = ("Краткий вывод\n• Первый тезис\n\nМогу рассказать подробнее."
+                    "\n\nОтвет модели без интернет-поиска")
+        self.assertEqual(first["text"], expected)
+        self.assertIn(RESPONSE_STYLE, self.llm.calls[-1][0]["content"])
+        await self.service.handle(message("Расскажи подробнее", reply=first, msg_id=2, user=2))
+        self.assertEqual(self.llm.calls[-1][2]["content"], expected)
+        self.assertEqual(self.llm.calls[-1][-1]["content"], "Расскажи подробнее")
+
+    async def test_response_style_is_applied_with_a_custom_system_prompt(self):
+        prompt = Path(self.tmp.name) / "prompt.txt"
+        prompt.write_text("Пользовательские правила.", encoding="utf-8")
+        service = BotService(Config(system_prompt_path=str(prompt)), self.storage,
+                             self.telegram, self.llm, 99, "TestBot")
+        await service.handle(message("@TestBot вопрос", msg_id=1))
+        system = self.llm.calls[-1][0]["content"]
+        self.assertTrue(system.startswith("Пользовательские правила."))
+        self.assertIn(RESPONSE_STYLE, system)
 
     async def test_split_response_can_be_continued_from_any_part(self):
         self.llm.answer = "😀" * 6000
