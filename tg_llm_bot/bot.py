@@ -5,6 +5,7 @@ from pathlib import Path
 
 from .api import LLMClient, LLMError, TelegramClient, render_completion
 from .config import Config
+from .formatting import RESPONSE_STYLE
 from .routing import quoted_content, route_message, split_message
 from .storage import ContextLimitError, Storage
 
@@ -78,7 +79,7 @@ class BotService:
         mode = ("Доступен веб-поиск провайдера; цитируй только реальные результаты."
                 if self.config.web_search_enabled else
                 "Веб-поиск недоступен. Проверка по интернет-источникам не выполняется.")
-        system = self.system_prompt + f"\nДата UTC: {today}.\n{mode}"
+        system = self.system_prompt + f"\nДата UTC: {today}.\n{mode}\n\n{RESPONSE_STYLE}"
         try:
             context = self.storage.context(parent_id, self.config.max_context_chars,
                                            self.config.max_context_messages)

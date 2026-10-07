@@ -3,7 +3,9 @@ import unittest
 
 import httpx
 
-from tg_llm_bot.api import LLMClient, LLMError, TelegramClient, TelegramError, render_completion
+from tg_llm_bot.api import (
+    Completion, LLMClient, LLMError, TelegramClient, TelegramError, render_completion,
+)
 from tg_llm_bot.config import Config, ConfigError
 
 
@@ -36,7 +38,17 @@ class APITests(unittest.IsolatedAsyncioTestCase):
             result = await LLMClient(Config(llm_api_key="fake"), client).complete(messages)
         self.assertEqual(captured[0]["messages"], messages)
         self.assertNotIn("plugins", captured[0])
-        self.assertIn("интернет-проверка не выполнялась", render_completion(result, False))
+        self.assertEqual(render_completion(result, False), "Ответ\n\nОтвет модели без интернет-поиска")
+
+    async def test_render_markdown_and_search_modes(self):
+        completion = Completion("**Вывод**\n* Первый тезис", (("Источник", "https://example.org"),))
+        with_sources = render_completion(completion, True)
+        self.assertTrue(with_sources.startswith("Вывод\n• Первый тезис"))
+        self.assertIn("Источник\nhttps://example.org", with_sources)
+        self.assertNotIn("Ответ модели без интернет-поиска", with_sources)
+        without_sources = render_completion(Completion("**Вывод**"), True)
+        self.assertIn("интернет-проверка не подтверждена", without_sources)
+        self.assertNotIn("Ответ модели без интернет-поиска", without_sources)
 
     async def test_web_search_returns_only_real_api_annotations(self):
         captured = []
